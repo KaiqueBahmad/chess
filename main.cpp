@@ -1,23 +1,18 @@
 #include <iostream>
 #include <string>
+#include "pieces/Piece.h"
+#include "pieces/King.h"
+#include "pieces/Queen.h"
+#include "pieces/Rook.h"
+#include "pieces/Knight.h"
+#include "pieces/Bishoop.h"
+#include "pieces/Pawn.h"
 
-class Pessoa {
-private:
-    std::string nome;
+using namespace std;
 
-public:
-    void setNome(const std::string& novoNome) {
-        nome = novoNome;
-    }
-    std::string getNome() const {
-        return nome;
-    }
-
-};
 
 int main() {
-    Pessoa p;
-    p.setNome("João");
-    std::cout << "Nome: " << p.getNome() << std::endl;
+
+
     return 0;
 }
