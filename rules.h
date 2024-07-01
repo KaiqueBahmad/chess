@@ -44,6 +44,7 @@ int **createBoard() {
     }
 
     board[0][3] = B_ROOK;
+    board[0][5] = B_ROOK;
     board[5][5] = B_ROOK;
     board[5][4] = W_KING;
 
@@ -104,6 +105,7 @@ bool isWhiteKingAtacked(int** board) {
         }
         i++;
     }
+    int test = 100;
     if (towerXray) return towerXray;
     // checking for straight line checks from below
     i = 7;
@@ -168,8 +170,8 @@ int **nextMovesOfWKing(int x, int y, int** board) {
         tempBoard[y-1][x] = W_KING;
         if (!isWhiteKingAtacked(tempBoard)) {
             moves[i] = new int[2];
-            moves[i][0] = y-1;
-            moves[i++][1] = x;
+            moves[i][0] = x;
+            moves[i++][1] = y-1;
         }
         tempBoard[y][x] = W_KING;
         tempBoard[y-1][x] = oldPiece;
@@ -182,8 +184,8 @@ int **nextMovesOfWKing(int x, int y, int** board) {
         tempBoard[y+1][x] = W_KING;
         if (!isWhiteKingAtacked(tempBoard)) {
             moves[i] = new int[2];
-            moves[i][0] = y+1;
-            moves[i++][1] = x;
+            moves[i][0] = x;
+            moves[i++][1] = y+1;
         }
         tempBoard[y][x] = W_KING;
         tempBoard[y+1][x] = oldPiece;
@@ -196,25 +198,25 @@ int **nextMovesOfWKing(int x, int y, int** board) {
         tempBoard[y][x-1] = W_KING;
         if (!isWhiteKingAtacked(tempBoard)) {
             moves[i] = new int[2];
-            moves[i][0] = y;
-            moves[i++][1] = x-1;
+            moves[i][0] = x-1;
+            moves[i++][1] = y;
         }
         tempBoard[y][x] = W_KING;
         tempBoard[y][x-1] = oldPiece;
     }
 
     // Move right
-    if (x-1 >= 0 && isEnemyForWhite(board[y][x-1])) {
+    if (x+1 < 8 && isEnemyForWhite(board[y][x+1])) {
         tempBoard[y][x] = EMPTY;
-        int oldPiece = tempBoard[y][x-1];
-        tempBoard[y][x-1] = W_KING;
+        int oldPiece = tempBoard[y][x+1];
+        tempBoard[y][x+1] = W_KING;
         if (!isWhiteKingAtacked(tempBoard)) {
             moves[i] = new int[2];
-            moves[i][0] = y;
-            moves[i++][1] = x-1;
+            moves[i][0] = x+1;
+            moves[i++][1] = y;
         }
         tempBoard[y][x] = W_KING;
-        tempBoard[y][x-1] = oldPiece;
+        tempBoard[y][x+1] = oldPiece;
     }
 
     // Move Up-Left
@@ -224,8 +226,8 @@ int **nextMovesOfWKing(int x, int y, int** board) {
         tempBoard[y-1][x-1] = W_KING;
         if (!isWhiteKingAtacked(tempBoard)) {
             moves[i] = new int[2];
-            moves[i][0] = y-1;
-            moves[i++][1] = x-1;
+            moves[i][0] = x-1;
+            moves[i++][1] = y-1;
         }
         tempBoard[y][x] = W_KING;
         tempBoard[y-1][x-1] = oldPiece;
@@ -238,8 +240,8 @@ int **nextMovesOfWKing(int x, int y, int** board) {
         tempBoard[y-1][x+1] = W_KING;
         if (!isWhiteKingAtacked(tempBoard)) {
             moves[i] = new int[2];
-            moves[i][0] = y-1;
-            moves[i++][1] = x+1;
+            moves[i][0] = x+1;
+            moves[i++][1] = y-1;
         }
         tempBoard[y][x] = W_KING;
         tempBoard[y-1][x+1] = oldPiece;
@@ -252,8 +254,8 @@ int **nextMovesOfWKing(int x, int y, int** board) {
         tempBoard[y+1][x-1] = W_KING;
         if (!isWhiteKingAtacked(tempBoard)) {
             moves[i] = new int[2];
-            moves[i][0] = y+1;
-            moves[i++][1] = x-1;
+            moves[i][0] = x-1;
+            moves[i++][1] = y+1;
         }
         tempBoard[y][x] = W_KING;
         tempBoard[y+1][x-1] = oldPiece;
@@ -338,7 +340,6 @@ int **nextMovesOfWKing(int x, int y, int** board) {
 
 int **nextMovesOf(int x, int y, int** board) {
     int pieceType = board[y][x];
-    cout << board[y][x] << endl;
     switch (pieceType)
     {
     // case B_KING:
