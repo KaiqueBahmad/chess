@@ -44,7 +44,7 @@ int **createBoard() {
     }
 
     board[0][3] = B_ROOK;
-    board[7][5] = B_ROOK;
+    board[5][5] = B_ROOK;
     board[5][4] = W_KING;
 
     // board[0][0] = B_ROOK;   board[0][1] = B_KNIGHT; board[0][2] = B_BISHOP;
