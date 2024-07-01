@@ -29,7 +29,7 @@ int main() {
     cout << nextMovesOf(4, 5, tabuleiro) << endl;
     int** moves = nextMovesOf(4, 5, tabuleiro);
     for (int i = 0; i < 27; i++) {
-        cout << "X: " << moves[i][0] << ", Y: " << moves[i][1] << endl;
+        cout << "X: " << moves[i][1] << ", Y: " << moves[i][0] << endl;
     }
 
     return 0;
