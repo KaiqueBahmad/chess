@@ -28,24 +28,32 @@ int **createBoard() {
     int **board = new int*[8];
     for (int i = 0; i < 8; ++i) {
         board[i] = new int[8];
-        if (i == 1) {
-            for (int j = 0; j < 8; j++) {
-                board[i][j] = B_PAWN;
-            }
+        for (int j = 0; j < 8; j++) {
+            board[i][j] = 0;
         }
-        if (i == 6) {
-            for (int j = 0; j < 8; j++) {
-                board[i][j] = W_PAWN;
-            }
-        }
+        // if (i == 1) {
+        //     for (int j = 0; j < 8; j++) {
+        //         board[i][j] = B_PAWN;
+        //     }
+        // }
+        // if (i == 6) {
+        //     for (int j = 0; j < 8; j++) {
+        //         board[i][j] = W_PAWN;
+        //     }
+        // }
     }
-    board[0][0] = B_ROOK;   board[0][1] = B_KNIGHT; board[0][2] = B_BISHOP;
-    board[0][3] = B_QUEEN;  board[0][4] = B_KING;   board[0][5] = B_BISHOP;
-    board[0][6] = B_KNIGHT; board[0][7] = B_ROOK;
+
+    board[0][3] = B_ROOK;
+    board[7][5] = B_ROOK;
+    board[5][4] = W_KING;
+
+    // board[0][0] = B_ROOK;   board[0][1] = B_KNIGHT; board[0][2] = B_BISHOP;
+    // board[0][3] = B_QUEEN;  board[0][4] = B_KING;   board[0][5] = B_BISHOP;
+    // board[0][6] = B_KNIGHT; board[0][7] = B_ROOK;
       
-    board[7][0] = W_ROOK;   board[7][1] = W_KNIGHT; board[7][2] = W_BISHOP;
-    board[7][3] = W_QUEEN;  board[7][4] = W_KING;   board[7][5] = W_BISHOP;
-    board[7][6] = W_KNIGHT; board[7][7] = W_ROOK;
+    // board[7][0] = W_ROOK;   board[7][1] = W_KNIGHT; board[7][2] = W_BISHOP;
+    // board[7][3] = W_QUEEN;  board[7][4] = W_KING;   board[7][5] = W_BISHOP;
+    // board[7][6] = W_KNIGHT; board[7][7] = W_ROOK;
     return board;
 }
 
@@ -78,7 +86,7 @@ bool isWhiteKingAtacked(int** board) {
             }
             y++;
         }
-        if (board[y][x] == W_KING) {
+        if (y < 8 && board[y][x] == W_KING) {
             break;
         }
         y = 0;
@@ -97,7 +105,6 @@ bool isWhiteKingAtacked(int** board) {
         i++;
     }
     if (towerXray) return towerXray;
-
     // checking for straight line checks from below
     i = 7;
     towerXray = false;
@@ -112,8 +119,8 @@ bool isWhiteKingAtacked(int** board) {
     if (towerXray) return towerXray;
     
     // checking for straight line checks from left
-    int i = 0;
-    bool towerXray = false;
+    i = 0;
+    towerXray = false;
     while (i < x) {
         if (board[y][i] == B_ROOK || board[y][i] == B_QUEEN) {
             towerXray = true;
@@ -142,6 +149,12 @@ bool isEnemyForWhite(int piece) {
     return false;
 }
 
+bool isEnemyForBlack(int piece) {
+    if ((piece >= W_KING && piece <= W_PAWN) || piece == EMPTY) {
+        return true;
+    }
+    return false;
+}
 
 int **nextMovesOfWKing(int x, int y, int** board) {
     int** moves = new int*[MAX_MOVES];
@@ -162,7 +175,6 @@ int **nextMovesOfWKing(int x, int y, int** board) {
         tempBoard[y-1][x] = oldPiece;
 
     }
-    
     // Move down
     if (y+1 <= 7 && isEnemyForWhite(board[y+1][x])) {
         tempBoard[y][x] = EMPTY;
@@ -246,7 +258,6 @@ int **nextMovesOfWKing(int x, int y, int** board) {
         tempBoard[y][x] = W_KING;
         tempBoard[y+1][x-1] = oldPiece;
     }
-
     // Move  Down-Right
     if ((y+1 <= 7 && x+1 >= 0) && isEnemyForWhite(board[y+1][x+1])) {
         tempBoard[y][x] = EMPTY;
@@ -327,6 +338,7 @@ int **nextMovesOfWKing(int x, int y, int** board) {
 
 int **nextMovesOf(int x, int y, int** board) {
     int pieceType = board[y][x];
+    cout << board[y][x] << endl;
     switch (pieceType)
     {
     // case B_KING:
