@@ -148,7 +148,7 @@ bool isWhiteKingAtacked(int** board) {
     }
 
     i = 1;
-    bool diagonalCheck = false;
+    diagonalCheck = false;
     while ( i + x < 8 && i + y < 8  ) {
         if (board[y+i][x+i] != EMPTY) {
             if (board[y+i][x+i] == B_BISHOP || board[y+i][x+i] == B_QUEEN) {
