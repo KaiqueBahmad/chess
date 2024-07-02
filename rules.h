@@ -2,7 +2,7 @@
 #define RULES_HPP
 #include <algorithm>
 #include <iterator>
-// Number of moves of moves
+// Number of moves
 // a queen could do if at
 // center of the board 
 #define MAX_MOVES 27
@@ -107,6 +107,7 @@ bool isWhiteKingAtacked(int** board) {
     }
     int test = 100;
     if (towerXray) return towerXray;
+
     // checking for straight line checks from below
     i = 7;
     towerXray = false;
@@ -133,8 +134,29 @@ bool isWhiteKingAtacked(int** board) {
     }
     if (towerXray) return towerXray;
     
+    // checking for diagonal checks UP-LEFT
+    i = 1;
+    bool diagonalCheck = false;
+    while ( i + x < 8 && i + y < 8  ) {
+        if (board[y+i][x+i] != EMPTY) {
+            if (board[y+i][x+i] == B_BISHOP || board[y+i][x+i] == B_QUEEN) {
+                diagonalCheck = true;
+            }
+            break;
+        }
+        i++;
+    }
 
-
+    i = 1;
+    bool diagonalCheck = false;
+    while ( i + x < 8 && i + y < 8  ) {
+        if (board[y+i][x+i] != EMPTY) {
+            if (board[y+i][x+i] == B_BISHOP || board[y+i][x+i] == B_QUEEN) {
+                diagonalCheck = true;
+            }
+            break;
+        }
+    }
 
     return false;
 
