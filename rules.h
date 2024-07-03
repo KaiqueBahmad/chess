@@ -10,18 +10,20 @@ using namespace std;
 
 enum pieces {
     EMPTY    = 0,
-    W_KING   = 1,
-    W_QUEEN  = 2,
-    W_ROOK   = 3,
-    W_KNIGHT = 4,
-    W_BISHOP = 5,
-    W_PAWN   = 6,
-    B_KING   = 7,
-    B_QUEEN  = 8,
-    B_ROOK   = 10,
-    B_KNIGHT = 11,
-    B_BISHOP = 12,
-    B_PAWN   = 13,
+    W_KING,
+    W_QUEEN,
+    W_ROOK,
+    W_KNIGHT,
+    W_BISHOP,
+    W_EN_PASSANT,
+    W_PAWN,
+    B_KING,
+    B_QUEEN,
+    B_ROOK,
+    B_KNIGHT,
+    B_BISHOP,
+    B_EN_PASSANT,
+    B_PAWN
 };
 
 int **createBoard() {
@@ -47,7 +49,7 @@ int **createBoard() {
     board[0][5] = B_ROOK;
     board[5][5] = B_ROOK;
     board[5][4] = W_KING;
-
+    board[1][7] = B_BISHOP;
     // board[0][0] = B_ROOK;   board[0][1] = B_KNIGHT; board[0][2] = B_BISHOP;
     // board[0][3] = B_QUEEN;  board[0][4] = B_KING;   board[0][5] = B_BISHOP;
     // board[0][6] = B_KNIGHT; board[0][7] = B_ROOK;
@@ -134,29 +136,59 @@ bool isWhiteKingAtacked(int** board) {
     }
     if (towerXray) return towerXray;
     
-    // checking for diagonal checks UP-LEFT
+    // checking for diagonal checks UP-RIGHT
     i = 1;
-    bool diagonalCheck = false;
-    while ( i + x < 8 && i + y < 8  ) {
-        if (board[y+i][x+i] != EMPTY) {
-            if (board[y+i][x+i] == B_BISHOP || board[y+i][x+i] == B_QUEEN) {
-                diagonalCheck = true;
+    while ( i + x < 8 && y-i >= 0  ) {
+        if (board[y-i][x+i] != EMPTY) {
+            if (board[y-i][x+i] == B_BISHOP || board[y-i][x+i] == B_QUEEN) {
+                return true;
             }
             break;
         }
         i++;
     }
 
+    // checking for diagonal checks UP-LEFT
     i = 1;
-    diagonalCheck = false;
-    while ( i + x < 8 && i + y < 8  ) {
-        if (board[y+i][x+i] != EMPTY) {
-            if (board[y+i][x+i] == B_BISHOP || board[y+i][x+i] == B_QUEEN) {
-                diagonalCheck = true;
+    while ( x-i >= 0 && y-i >= 0  ) {
+        if (board[y-i][x-i] != EMPTY) {
+            if (board[y-i][x-i] == B_BISHOP || board[y-i][x-i] == B_QUEEN) {
+                return true;
             }
             break;
         }
+        i++;
     }
+
+    // checking for diagonal checks DOWN-LEFT
+    i = 1;
+    while ( x-i >= 0 && y+i < 8  ) {
+        if (board[y+i][x-i] != EMPTY) {
+            if (board[y+i][x-i] == B_BISHOP || board[y+i][x-i] == B_QUEEN) {
+                return true;
+            }
+            break;
+        }
+        i++;
+    }
+
+    // checking for diagonal checks DOWN-RIGHT
+    i = 1;
+    while ( x+i < 8 && y+i < 8 ) {
+        if (board[y+i][x+i] != EMPTY) {
+            if (board[y+i][x+i] == B_BISHOP || board[y+i][x+i] == B_QUEEN) {
+                return true;
+            }
+            break;
+        }
+        i++;
+    }
+
+    // checking for Knight checks
+    int knightMoves[8][2] = {
+        {1, 2}, {2, 1}, {2, -1}, {1, -2},
+        {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}
+    };
 
     return false;
 
