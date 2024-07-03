@@ -11,7 +11,7 @@ int main() {
         for (int j = 0; j < 8; j++) {
             cout << tabuleiro[i][j] << "\t";
         }
-        cout << endl;
+        cout << endl << endl;
     }
     int** moves = nextMovesOf(4, 5, tabuleiro);
     for (int i = 0; i < 27; i++) {

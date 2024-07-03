@@ -49,7 +49,7 @@ int **createBoard() {
     board[0][5] = B_ROOK;
     board[5][5] = B_ROOK;
     board[5][4] = W_KING;
-    board[1][7] = B_BISHOP;
+    board[6][3] = B_KNIGHT;
     // board[0][0] = B_ROOK;   board[0][1] = B_KNIGHT; board[0][2] = B_BISHOP;
     // board[0][3] = B_QUEEN;  board[0][4] = B_KING;   board[0][5] = B_BISHOP;
     // board[0][6] = B_KNIGHT; board[0][7] = B_ROOK;
@@ -189,6 +189,24 @@ bool isWhiteKingAtacked(int** board) {
         {1, 2}, {2, 1}, {2, -1}, {1, -2},
         {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}
     };
+    i = 0;
+    while(i < 8) {
+        if (knightMoves[i][0] + x < 0 || knightMoves[i][1] + x > 7 ) {
+            i++;
+            continue;
+        }
+        if (knightMoves[i][1] + y < 0 || knightMoves[i][1] + y > 7 ) {
+            i++;
+            continue;
+        }
+        // cout << knightMoves[i][0] << " || " << knightMoves[i][1] << endl;
+        int cell = board[y+knightMoves[i][1]][x+knightMoves[i][0]];
+        if (cell == B_KNIGHT) {
+            return true;
+        }
+
+        i++;
+    }
 
     return false;
 
