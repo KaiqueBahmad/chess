@@ -489,10 +489,10 @@ int **nextMovesOfWKing(int x, int y, int** board) {
 
 // }
 
-int **nextMovesOfWRook(int x, int y, int** board) {
-    int** moves = new int*[MAX_MOVES];
+// int **nextMovesOfWRook(int x, int y, int** board) {
+//     int** moves = new int*[MAX_MOVES];
 
-}
+// }
 
 // int **nextMovesOfWKnight(int x, int y, int** board) {
 //     int** moves = new int*[MAX_MOVES];
@@ -645,45 +645,142 @@ int **nextMovesOfBRook(int x, int y, int** board) {
     int n = 0;
     int** tempBoard = copyBoard(board, 8);
     int i = 1;
-    // Straight up moves
+    // Straight down moves
     while (i + y < 8) {
         if (board[y+i][x] == EMPTY) {
             tempBoard[y][x] = EMPTY;
             int oldPiece = tempBoard[y+i][x];
             tempBoard[y+i][x] = B_ROOK;
             if (!isBlackKingAtacked(tempBoard)) {
+                moves[n] = new int[2];
                 moves[n][0] = x;
-                moves[n][1] = y+i;
+                moves[n++][1] = y+i;
             }
             tempBoard[y][x] = B_ROOK;
             tempBoard[y+i][x] = oldPiece;
             i++;
             continue;
         }
-        if (isEnemyForBlack(board[y+1][x])) {
+        cout << x << "  " << y+i << endl;
+        cout << (board[y+i][x] == EMPTY) << endl;
+        if (isEnemyForBlack(board[y+i][x])) {
             tempBoard[y][x] = EMPTY;
             int oldPiece = tempBoard[y+i][x];
             tempBoard[y+i][x] = B_ROOK;
             if (!isBlackKingAtacked(tempBoard)) {
+                moves[n] = new int[2];
                 moves[n][0] = x;
-                moves[n][1] = y+i;
+                moves[n++][1] = y+i;
             }
             tempBoard[y][x] = B_ROOK;
             tempBoard[y+i][x] = oldPiece;
-            i++;
-            break;
         }
-        i++;
+        break;
+    }
+    
+    // Straight up moves
+    i = 1;
+    while(y - i >= 0) {
+        if (board[y-i][x] == EMPTY) {
+            tempBoard[y][x] = EMPTY;
+            int oldPiece = tempBoard[y-i][x];
+            tempBoard[y-i][x] = B_ROOK;
+            if (!isBlackKingAtacked(tempBoard)) {
+                moves[n] = new int[2];
+                moves[n][0] = x;
+                moves[n++][1] = y-i;
+            }
+            tempBoard[y][x] = B_ROOK;
+            tempBoard[y-i][x] = oldPiece;
+            i++;
+            continue;
+        }
+        if (isEnemyForBlack(board[y-i][x])) {
+            tempBoard[y][x] = EMPTY;
+            int oldPiece = tempBoard[y-i][x];
+            tempBoard[y-i][x] = B_ROOK;
+            if (!isBlackKingAtacked(tempBoard)) {
+                moves[n] = new int[2];
+                moves[n][0] = x;
+                moves[n++][1] = y-i;
+            }
+            tempBoard[y][x] = B_ROOK;
+            tempBoard[y-i][x] = oldPiece;
+        }
+        break;
     }
 
+    // Straight right moves
+    i = 1;
+    while(x + i < 8) {
+        if (board[y][x+i] == EMPTY) {
+            tempBoard[y][x] = EMPTY;
+            int oldPiece = tempBoard[y][x+i];
+            tempBoard[y][x+i] = B_ROOK;
+            if (!isBlackKingAtacked(tempBoard)) {
+                moves[n] = new int[2];
+                moves[n][0] = x+i;
+                moves[n++][1] = y;
+            }
+            tempBoard[y][x] = B_ROOK;
+            tempBoard[y][x+i] = oldPiece;
+            i++;
+            continue;
+        }
+        if (isEnemyForBlack(board[y][x+i])) {
+            tempBoard[y][x] = EMPTY;
+            int oldPiece = tempBoard[y][x+i];
+            tempBoard[y][x+i] = B_ROOK;
+            if (!isBlackKingAtacked(tempBoard)) {
+                moves[n] = new int[2];
+                moves[n][0] = x+i;
+                moves[n++][1] = y;
+            }
+            tempBoard[y][x] = B_ROOK;
+            tempBoard[y][x+i] = oldPiece;
+        }
+        break;
     }
+
+    
+   // Straight left moves
+    i = 1;
+    while(x - i >= 0) {
+        if (board[y][x-i] == EMPTY) {
+            tempBoard[y][x] = EMPTY;
+            int oldPiece = tempBoard[y][x-i];
+            tempBoard[y][x-i] = B_ROOK;
+            if (!isBlackKingAtacked(tempBoard)) {
+                moves[n] = new int[2];
+                moves[n][0] = x-i;
+                moves[n++][1] = y;
+            }
+            tempBoard[y][x] = B_ROOK;
+            tempBoard[y][x-i] = oldPiece;
+            i++;
+            continue;
+        }
+        if (isEnemyForBlack(board[y][x-i])) {
+            tempBoard[y][x] = EMPTY;
+            int oldPiece = tempBoard[y][x-i];
+            tempBoard[y][x-i] = B_ROOK;
+            if (!isBlackKingAtacked(tempBoard)) {
+                moves[n] = new int[2];
+                moves[n][0] = x-i;
+                moves[n++][1] = y;
+            }
+            tempBoard[y][x] = B_ROOK;
+            tempBoard[y][x-i] = oldPiece;
+        }
+        break;
+        }
 
     deleteBoard(tempBoard, 8);
-    while (i < MAX_MOVES) {
-        moves[i] = new int[2];
-        moves[i][0] = -1;
-        moves[i][1] = -1;
-        i++;
+    while (n < MAX_MOVES) {
+        moves[n] = new int[2];
+        moves[n][0] = -1;
+        moves[n][1] = -1;
+        n++;
     }
     return moves;
 
@@ -733,9 +830,9 @@ int **nextMovesOf(int x, int y, int** board) {
     // case W_QUEEN:
     //     return nextMovesOfWQueen(x, y, board);
     //     break;
-    case W_ROOK:
-        return nextMovesOfWRook(x, y, board);
-        break;
+    // case W_ROOK:
+    //     return nextMovesOfWRook(x, y, board);
+    //     break;
     // case W_KNIGHT:
     //     return nextMovesOfWKnight(x, y, board);
     //     break;
