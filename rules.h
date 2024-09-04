@@ -25,6 +25,7 @@ enum pieces {
     B_EN_PASSANT,
     B_PAWN
 };
+const int SIZE = 9; // Number of permutations this will generate
 
 int **createBoard() {
     int **board = new int*[8];
