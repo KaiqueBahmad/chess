@@ -4,7 +4,8 @@
 #include <stdlib.h>  // Para rand() e srand()
 #include <time.h>    // Para clock_t, clock(), time()
 
-int possible_moves(board_t b, int i, int j) {
+
+int possible_moves(board_t b, int i, int j, move_t moves[], int max_moves) {
     if (!valid(i,j) || !b[i][j]) return 0;
     
     signed char p = b[i][j], c = p > 0 ? 1 : -1, t = p < 0 ? -p : p;
@@ -12,41 +13,80 @@ int possible_moves(board_t b, int i, int j) {
     
     if (t == 6) { // Peão
         d = c > 0 ? 1 : -1;
+        
+        // Move forward
         if (valid(i+d,j) && !b[i+d][j]) {
-            m++;
-            if (i == (c > 0 ? 1 : 6) && !b[i+2*d][j]) m++;
+            if (m < max_moves) {
+                moves[m] = (move_t){i, j, i+d, j, p, 0};
+                m++;
+            }
+            // Double move from starting position
+            if (i == (c > 0 ? 1 : 6) && !b[i+2*d][j] && m < max_moves) {
+                moves[m] = (move_t){i, j, i+2*d, j, p, 0};
+                m++;
+            }
         }
-        if (valid(i+d,j-1) && b[i+d][j-1] && (c*b[i+d][j-1] < 0)) m++;
-        if (valid(i+d,j+1) && b[i+d][j+1] && (c*b[i+d][j+1] < 0)) m++;
+        
+        // Capture diagonally left
+        if (valid(i+d,j-1) && b[i+d][j-1] && (c*b[i+d][j-1] < 0) && m < max_moves) {
+            moves[m] = (move_t){i, j, i+d, j-1, p, b[i+d][j-1]};
+            m++;
+        }
+        
+        // Capture diagonally right
+        if (valid(i+d,j+1) && b[i+d][j+1] && (c*b[i+d][j+1] < 0) && m < max_moves) {
+            moves[m] = (move_t){i, j, i+d, j+1, p, b[i+d][j+1]};
+            m++;
+        }
     }
     else if (t == 5) { // Cavalo
         static const signed char n[][2] = {{-2,-1},{-2,1},{-1,-2},{-1,2},{1,-2},{1,2},{2,-1},{2,1}};
-        for (k=0; k<8; k++) {
+        for (k=0; k<8 && m < max_moves; k++) {
             r = i + n[k][0]; col = j + n[k][1];
-            if (valid(r,col) && (!b[r][col] || c*b[r][col] < 0)) m++;
+            if (valid(r,col) && (!b[r][col] || c*b[r][col] < 0)) {
+                moves[m] = (move_t){i, j, r, col, p, b[r][col]};
+                m++;
+            }
         }
     }
     else if (t == 1) { // Rei
-        for (r = i-1; r <= i+1; r++)
-            for (col = j-1; col <= j+1; col++)
-                if ((r != i || col != j) && valid(r,col) && (!b[r][col] || c*b[r][col] < 0)) m++;
+        for (r = i-1; r <= i+1 && m < max_moves; r++) {
+            for (col = j-1; col <= j+1 && m < max_moves; col++) {
+                if ((r != i || col != j) && valid(r,col) && (!b[r][col] || c*b[r][col] < 0)) {
+                    moves[m] = (move_t){i, j, r, col, p, b[r][col]};
+                    m++;
+                }
+            }
+        }
     }
     else { // Torre, Bispo, Rainha
         static const signed char dir[][2] = {{-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1}};
         int start = t == 4 ? 0 : t == 3 ? 4 : 0;
         int end = t == 4 ? 4 : t == 3 ? 8 : 8;
         
-        for (d = start; d < end; d++) {
-            for (k = 1; k < 8; k++) {
+        for (d = start; d < end && m < max_moves; d++) {
+            for (k = 1; k < 8 && m < max_moves; k++) {
                 r = i + dir[d][0] * k; col = j + dir[d][1] * k;
                 if (!valid(r,col)) break;
-                if (!b[r][col]) m++;
-                else { if (c*b[r][col] < 0) m++; break; }
+                
+                if (!b[r][col]) {
+                    moves[m] = (move_t){i, j, r, col, p, 0};
+                    m++;
+                } else {
+                    if (c*b[r][col] < 0) {
+                        moves[m] = (move_t){i, j, r, col, p, b[r][col]};
+                        m++;
+                    }
+                    break;
+                }
             }
         }
     }
+    
     return m;
 }
+
+
 
 int is_at_check(board_t b) {
     int kr[2] = {-1,-1}, kc[2] = {-1,-1}, i, j, r, col, k, d;

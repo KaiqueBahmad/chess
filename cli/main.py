@@ -1,159 +1,244 @@
 import ctypes
-import numpy as np
+import random
+import os
 
-class ChessLibrary:
-    """Python wrapper for the chess C library"""
+# Load the shared library
+try:
+    chess_lib = ctypes.CDLL('../bin/libchess.so')
+except OSError:
+    print("Error: Could not load libchess.so from ../bin/. Make sure it exists there.")
+    exit(1)
+
+# Define the board type (8x8 array of signed chars)
+board_t = ctypes.c_byte * 8 * 8
+
+# Define move_t structure based on your header file
+class move_t(ctypes.Structure):
+    _fields_ = [
+        ("from_row", ctypes.c_int),
+        ("from_col", ctypes.c_int),
+        ("to_row", ctypes.c_int),
+        ("to_col", ctypes.c_int),
+        ("piece", ctypes.c_byte),
+        ("captured", ctypes.c_byte)
+    ]
+
+# Define function signatures
+chess_lib.possible_moves.argtypes = [board_t, ctypes.c_int, ctypes.c_int, ctypes.POINTER(move_t), ctypes.c_int]
+chess_lib.possible_moves.restype = ctypes.c_int
+
+chess_lib.is_at_check.argtypes = [board_t]
+chess_lib.is_at_check.restype = ctypes.c_int
+
+# Chess piece values based on your C code
+PIECES = {
+    'K': 1,   # King (t == 1)
+    'Q': 2,   # Queen (t == 2)
+    'R': 3,   # Rook (t == 3)
+    'B': 4,   # Bishop (t == 4)
+    'N': 5,   # Knight (t == 5)
+    'P': 6,   # Pawn (t == 6)
+    'k': -1,  # Black King
+    'q': -2,  # Black Queen
+    'r': -3,  # Black Rook
+    'b': -4,  # Black Bishop
+    'n': -5,  # Black Knight
+    'p': -6,  # Black Pawn
+    '.': 0    # Empty square
+}
+
+PIECE_CHARS = {v: k for k, v in PIECES.items()}
+
+def create_random_board():
+    """Create a random chess board position"""
+    board = board_t()
     
-    def __init__(self, lib_path='../bin/libchess.so'):
-        """Initialize the chess library wrapper"""
-        self.lib = ctypes.CDLL(lib_path)
-        self._setup_function_signatures()
+    # Initialize empty board
+    for i in range(8):
+        for j in range(8):
+            board[i][j] = 0
+    
+    # Place some random pieces
+    pieces_to_place = ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N'] + ['P'] * 8
+    pieces_to_place += ['k', 'q', 'r', 'r', 'b', 'b', 'n', 'n'] + ['p'] * 8
+    
+    # Randomly place some pieces (not all, to make it more interesting)
+    num_pieces = random.randint(10, 20)
+    selected_pieces = random.sample(pieces_to_place, num_pieces)
+    
+    positions = [(i, j) for i in range(8) for j in range(8)]
+    random.shuffle(positions)
+    
+    for i, piece in enumerate(selected_pieces):
+        if i < len(positions):
+            row, col = positions[i]
+            board[row][col] = PIECES[piece]
+    
+    return board
+
+def print_board(board):
+    """Print the board in a readable format"""
+    print("\n  a b c d e f g h")
+    for i in range(8):
+        print(f"{8-i} ", end="")
+        for j in range(8):
+            piece_val = board[i][j]
+            piece_char = PIECE_CHARS.get(piece_val, '.')
+            print(f"{piece_char} ", end="")
+        print(f"{8-i}")
+    print("  a b c d e f g h\n")
+
+def square_to_notation(row, col):
+    """Convert array indices to chess notation"""
+    return f"{chr(ord('a') + col)}{8 - row}"
+
+def get_possible_moves(board, from_row, from_col):
+    """Get all possible moves for a piece using the C library"""
+    max_moves = 64  # Maximum possible moves on a chessboard
+    moves_array = (move_t * max_moves)()
+    
+    try:
+        # Call the C function
+        num_moves = chess_lib.possible_moves(board, from_row, from_col, moves_array, max_moves)
         
-    def _setup_function_signatures(self):
-        """Configure C function signatures for ctypes"""
-        # Board type: 8x8 signed char array (flattened to 64 bytes)
-        self.BoardType = ctypes.c_byte * 64
+        if num_moves <= 0:
+            return []
         
-        # possible_moves(board, row, col) -> int
-        self.lib.possible_moves.argtypes = [self.BoardType, ctypes.c_int, ctypes.c_int]
-        self.lib.possible_moves.restype = ctypes.c_int
-        
-        # is_at_check(board) -> int
-        self.lib.is_at_check.argtypes = [self.BoardType]
-        self.lib.is_at_check.restype = ctypes.c_int
-        
-        # generate_random_position(board) -> void
-        self.lib.generate_random_position.argtypes = [self.BoardType]
-        self.lib.generate_random_position.restype = None
-        
-        # simple_benchmark(num_positions) -> void
-        self.lib.simple_benchmark.argtypes = [ctypes.c_int]
-        self.lib.simple_benchmark.restype = None
-    
-    def create_board(self, board_2d=None):
-        """Create a board from 2D numpy array or empty board"""
-        board_1d = self.BoardType()
-        
-        if board_2d is not None:
-            if board_2d.shape != (8, 8):
-                raise ValueError("Board must be 8x8")
-            flat = board_2d.flatten().astype(np.int8)
-            for i in range(64):
-                board_1d[i] = flat[i]
-        else:
-            # Initialize empty board
-            for i in range(64):
-                board_1d[i] = 0
-                
-        return board_1d
-    
-    def board_to_numpy(self, board_1d):
-        """Convert ctypes board to 2D numpy array"""
-        return np.frombuffer(board_1d, dtype=np.int8).reshape(8, 8)
-    
-    def numpy_to_board(self, board_2d):
-        """Convert 2D numpy array to ctypes board"""
-        return self.create_board(board_2d)
-    
-    def generate_random_position(self, board=None):
-        """Generate a random chess position"""
-        if board is None:
-            board = self.create_board()
-        
-        self.lib.generate_random_position(board)
-        return board
-    
-    def possible_moves(self, board, row, col):
-        """Get number of possible moves for piece at (row, col)"""
-        if not (0 <= row < 8 and 0 <= col < 8):
-            raise ValueError("Position must be within 0-7 range")
-        
-        return self.lib.possible_moves(board, row, col)
-    
-    def is_at_check(self, board):
-        """Check if the current position is in check"""
-        result = self.lib.is_at_check(board)
-        return bool(result)
-    
-    def simple_benchmark(self, num_positions=1000):
-        """Run performance benchmark on random positions"""
-        print(f"Running benchmark with {num_positions} positions...")
-        self.lib.simple_benchmark(num_positions)
-    
-    def print_board(self, board, piece_symbols=None):
-        """Print board in a readable format"""
-        if piece_symbols is None:
-            # Default piece representation
-            piece_symbols = {
-                0: '.',   # Empty
-                1: 'P',   # White pawn
-                2: 'N',   # White knight
-                3: 'B',   # White bishop
-                4: 'R',   # White rook
-                5: 'Q',   # White queen
-                6: 'K',   # White king
-                -1: 'p',  # Black pawn
-                -2: 'n',  # Black knight
-                -3: 'b',  # Black bishop
-                -4: 'r',  # Black rook
-                -5: 'q',  # Black queen
-                -6: 'k'   # Black king
+        # Extract moves from the array
+        possible_moves = []
+        for i in range(num_moves):
+            move = moves_array[i]
+            
+            # Convert to chess notation
+            from_square = square_to_notation(move.from_row, move.from_col)
+            to_square = square_to_notation(move.to_row, move.to_col)
+            
+            # Get piece at destination (for capture info)
+            target_piece = board[move.to_row][move.to_col]
+            target_char = PIECE_CHARS.get(target_piece, '.')
+            
+            move_info = {
+                'from': from_square,
+                'to': to_square,
+                'from_coords': (move.from_row, move.from_col),
+                'to_coords': (move.to_row, move.to_col),
+                'capture': target_piece != 0,
+                'target_piece': target_char,
+                'piece': PIECE_CHARS.get(move.piece, '?'),
+                'captured': PIECE_CHARS.get(move.captured, '.') if move.captured != 0 else None
             }
+            possible_moves.append(move_info)
         
-        board_2d = self.board_to_numpy(board)
-        print("  a b c d e f g h")
-        for i in range(8):
-            print(f"{8-i} ", end="")
-            for j in range(8):
-                piece = board_2d[i][j]
-                symbol = piece_symbols.get(piece, str(piece))
-                print(f"{symbol} ", end="")
-            print(f" {8-i}")
-        print("  a b c d e f g h")
+        return possible_moves
+        
+    except Exception as e:
+        print(f"Error calling possible_moves: {e}")
+        return []
 
-# Convenience functions
-def create_chess_library(lib_path='../bin/libchess.so'):
-    """Create and return a ChessLibrary instance"""
-    return ChessLibrary(lib_path)
+def display_moves(moves):
+    """Display the possible moves in a readable format"""
+    if not moves:
+        print("No possible moves found.")
+        return
+    
+    print(f"Found {len(moves)} possible moves:")
+    for i, move in enumerate(moves, 1):
+        capture_info = f" (captures {move['target_piece']})" if move['capture'] else ""
+        print(f"{i:2d}. {move['from']} -> {move['to']}{capture_info}")
 
-# Example usage
+def highlight_board_with_moves(board, moves):
+    """Print the board with possible moves highlighted"""
+    if not moves:
+        print_board(board)
+        return
+    
+    # Create a set of destination squares for quick lookup
+    dest_squares = {move['to_coords'] for move in moves}
+    
+    print("\n  a b c d e f g h")
+    for i in range(8):
+        print(f"{8-i} ", end="")
+        for j in range(8):
+            piece_val = board[i][j]
+            piece_char = PIECE_CHARS.get(piece_val, '.')
+            
+            # Highlight possible move destinations
+            if (i, j) in dest_squares:
+                print(f"[{piece_char}]", end="")
+            else:
+                print(f" {piece_char} ", end="")
+        print(f"{8-i}")
+    print("  a b c d e f g h")
+    print("Note: [] indicates possible move destinations\n")
+
+def get_user_input():
+    """Get square selection from user"""
+    while True:
+        try:
+            user_input = input("Enter square (e.g., 'e4') or 'q' to quit: ").strip().lower()
+            if user_input == 'q':
+                return None, None
+            
+            if len(user_input) != 2:
+                print("Please enter a valid square (e.g., 'e4')")
+                continue
+            
+            col_char, row_char = user_input[0], user_input[1]
+            
+            if col_char not in 'abcdefgh' or row_char not in '12345678':
+                print("Please enter a valid square (e.g., 'e4')")
+                continue
+            
+            # Convert to array indices
+            col = ord(col_char) - ord('a')  # a=0, b=1, ..., h=7
+            row = 8 - int(row_char)         # 8=0, 7=1, ..., 1=7
+            
+            return row, col
+        except (ValueError, IndexError):
+            print("Please enter a valid square (e.g., 'e4')")
+
+def main():
+    print("Chess Library Tester")
+    print("===================")
+    
+    # Create a random board
+    board = create_random_board()
+    
+    while True:
+        print_board(board)
+        
+        # Check if in check
+        check_status = chess_lib.is_at_check(board)
+        if check_status:
+            print("CHECK!")
+        
+        # Get user input
+        row, col = get_user_input()
+        if row is None:
+            break
+        
+        # Check if there's a piece at the selected square
+        piece_value = board[row][col]
+        if piece_value == 0:
+            print("No piece at that square!")
+            continue
+        
+        piece_char = PIECE_CHARS.get(piece_value, '?')
+        print(f"Selected piece: {piece_char} at {chr(ord('a') + col)}{8 - row}")
+        
+        # Get and display possible moves
+        moves = get_possible_moves(board, row, col)
+        
+        if moves:
+            print(f"\nPossible moves for {piece_char}:")
+            display_moves(moves)
+            
+            print("\nBoard with possible moves highlighted:")
+            highlight_board_with_moves(board, moves)
+        else:
+            print("No possible moves for this piece.")
+        
+        print("-" * 40)
+
 if __name__ == "__main__":
-    # Initialize the library
-    chess = ChessLibrary()
-    
-    # Test basic functionality
-    print("Testing chess library...")
-    
-    # Create a random position
-    board = chess.generate_random_position()
-    print("\nGenerated random position:")
-    chess.print_board(board)
-    
-    # Test possible moves for different positions
-    # print("\nTesting possible moves:")
-    # for row in range(2):
-    #     for col in range(4):
-    #         moves = chess.possible_moves(board, row, col)
-    #         print(f"Position ({row},{col}): {moves} possible moves")
-    
-    # # Check if in check
-    # in_check = chess.is_at_check(board)
-    # print(f"\nPosition is in check: {in_check}")
-    
-    # # Run benchmark
-    # print("\nRunning benchmark:")
-    # chess.simple_benchmark(100)
-    
-    # # Convert to numpy for analysis
-    # board_numpy = chess.board_to_numpy(board)
-    # print(f"\nBoard as numpy array shape: {board_numpy.shape}")
-    # print(f"Board data type: {board_numpy.dtype}")
-    
-    # # Create custom board
-    # custom_board = np.zeros((8, 8), dtype=np.int8)
-    # custom_board[0, 0] = 4  # White rook
-    # custom_board[7, 7] = -4  # Black rook
-    
-    # custom_board_c = chess.numpy_to_board(custom_board)
-    # print("\nCustom board:")
-    # chess.print_board(custom_board_c)
+    main()
