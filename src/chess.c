@@ -92,6 +92,13 @@ int is_at_check(board_t b) {
 }
 
 void generate_random_position(board_t board) {
+static int seeded = 0;
+  if (!seeded) {
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      srand(tv.tv_sec * 1000000 + tv.tv_usec);  // Microsecond precision
+      seeded = 1;
+  }
   memset(board, 0, sizeof(board_t));
   
   // Sempre colocar os dois reis
