@@ -1,9 +1,8 @@
-// Versão ultra-mínima - apenas as funções essenciais
-typedef signed char board_t[8][8];
-
-static inline int valid(int r, int c) { 
-    return (unsigned)r < 8 && (unsigned)c < 8; 
-}
+#include "chess.h"
+#include <stdio.h>
+#include <string.h>  // Para memset
+#include <stdlib.h>  // Para rand() e srand()
+#include <time.h>    // Para clock_t, clock(), time()
 
 int possible_moves(board_t b, int i, int j) {
     if (!valid(i,j) || !b[i][j]) return 0;
@@ -92,11 +91,6 @@ int is_at_check(board_t b) {
     return 0;
 }
 
-#include <stdio.h>
-#include <string.h>  // Para memset
-#include <stdlib.h>  // Para rand() e srand()
-#include <time.h>    // Para clock_t, clock(), time()
-
 void generate_random_position(board_t board) {
   memset(board, 0, sizeof(board_t));
   
@@ -145,18 +139,4 @@ void simple_benchmark(int num_positions) {
   printf("Calls possible_moves/segundo: %.0f\n", (num_positions * 64.0) / total_time);
   printf("Total de movimentos calculados: %lld\n", total_moves);
   printf("Posições em xeque: %d (%.1f%%)\n", check_count, (check_count * 100.0) / num_positions);
-}
-
-// Substitua seu main por este:
-int main() {
-  // Teste rápido primeiro
-  simple_benchmark(1000);
-  
-  // Benchmark mais pesado
-  simple_benchmark(10000);
-  
-  // Se for rápido, teste com mais posições
-  simple_benchmark(100000);
-  
-  return 0;
 }
