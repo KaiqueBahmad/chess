@@ -91,59 +91,59 @@ int is_at_check(board_t b) {
     return 0;
 }
 
-void generate_random_position(board_t board) {
-static int seeded = 0;
-  if (!seeded) {
-      struct timeval tv;
-      gettimeofday(&tv, NULL);
-      srand(tv.tv_sec * 1000000 + tv.tv_usec);  // Microsecond precision
-      seeded = 1;
-  }
-  memset(board, 0, sizeof(board_t));
+// void generate_random_position(board_t board) {
+// static int seeded = 0;
+//   if (!seeded) {
+//       struct timeval tv;
+//       gettimeofday(&tv, NULL);
+//       srand(tv.tv_sec * 1000000 + tv.tv_usec);  // Microsecond precision
+//       seeded = 1;
+//   }
+//   memset(board, 0, sizeof(board_t));
   
-  // Sempre colocar os dois reis
-  board[rand() % 8][rand() % 8] = 1;  // Rei branco
-  board[rand() % 8][rand() % 8] = -1; // Rei preto
+//   // Sempre colocar os dois reis
+//   board[rand() % 8][rand() % 8] = 1;  // Rei branco
+//   board[rand() % 8][rand() % 8] = -1; // Rei preto
   
-  // Adicionar peças aleatórias (densidade ~25%)
-  for (int i = 0; i < 64; i++) {
-      if (rand() % 4 == 0 && board[i/8][i%8] == 0) {
-          int piece = (rand() % 5) + 2; // 2-6 (rainha, torre, bispo, cavalo, peão)
-          board[i/8][i%8] = (rand() % 2) ? piece : -piece;
-      }
-  }
-}
+//   // Adicionar peças aleatórias (densidade ~25%)
+//   for (int i = 0; i < 64; i++) {
+//       if (rand() % 4 == 0 && board[i/8][i%8] == 0) {
+//           int piece = (rand() % 5) + 2; // 2-6 (rainha, torre, bispo, cavalo, peão)
+//           board[i/8][i%8] = (rand() % 2) ? piece : -piece;
+//       }
+//   }
+// }
 
-void simple_benchmark(int num_positions) {
-  clock_t start, end;
-  long long total_moves = 0;
-  int check_count = 0;
+// void simple_benchmark(int num_positions) {
+//   clock_t start, end;
+//   long long total_moves = 0;
+//   int check_count = 0;
   
-  printf("=== BENCHMARK COM %d POSIÇÕES ===\n", num_positions);
-  srand(time(NULL));
+//   printf("=== BENCHMARK COM %d POSIÇÕES ===\n", num_positions);
+//   srand(time(NULL));
   
-  start = clock();
-  for (int test = 0; test < num_positions; test++) {
-      board_t board;
-      generate_random_position(board);
+//   start = clock();
+//   for (int test = 0; test < num_positions; test++) {
+//       board_t board;
+//       generate_random_position(board);
       
-      // Testar possible_moves em todas as casas
-      for (int i = 0; i < 8; i++) {
-          for (int j = 0; j < 8; j++) {
-              total_moves += possible_moves(board, i, j);
-          }
-      }
+//       // Testar possible_moves em todas as casas
+//       for (int i = 0; i < 8; i++) {
+//           for (int j = 0; j < 8; j++) {
+//               total_moves += possible_moves(board, i, j);
+//           }
+//       }
       
-      // Testar is_at_check
-      if (is_at_check(board)) check_count++;
-  }
-  end = clock();
+//       // Testar is_at_check
+//       if (is_at_check(board)) check_count++;
+//   }
+//   end = clock();
   
-  double total_time = ((double)(end - start)) / CLOCKS_PER_SEC;
+//   double total_time = ((double)(end - start)) / CLOCKS_PER_SEC;
   
-  printf("Tempo total: %.3f segundos\n", total_time);
-  printf("Posições/segundo: %.0f\n", num_positions / total_time);
-  printf("Calls possible_moves/segundo: %.0f\n", (num_positions * 64.0) / total_time);
-  printf("Total de movimentos calculados: %lld\n", total_moves);
-  printf("Posições em xeque: %d (%.1f%%)\n", check_count, (check_count * 100.0) / num_positions);
-}
+//   printf("Tempo total: %.3f segundos\n", total_time);
+//   printf("Posições/segundo: %.0f\n", num_positions / total_time);
+//   printf("Calls possible_moves/segundo: %.0f\n", (num_positions * 64.0) / total_time);
+//   printf("Total de movimentos calculados: %lld\n", total_moves);
+//   printf("Posições em xeque: %d (%.1f%%)\n", check_count, (check_count * 100.0) / num_positions);
+// }

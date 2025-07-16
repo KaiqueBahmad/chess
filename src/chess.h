@@ -11,7 +11,7 @@ static inline int valid(int r, int c) {
 
 int possible_moves(board_t b, int i, int j);
 int is_at_check(board_t b);
-void generate_random_position(board_t board);
-void simple_benchmark(int num_positions);
+// void generate_random_position(board_t board);
+// void simple_benchmark(int num_positions);
 
 #endif // CHESS_H
