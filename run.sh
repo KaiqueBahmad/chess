@@ -1,8 +1,20 @@
 mkdir -p bin
-tcc -o bin/chess src/chess.c src/main.c
-tcc -shared -fPIC -o bin/libchess.so src/chess.c
-# reduz o tamanho mas só vai funcionar se tiver rodando num os com /bin/sh
-#gzexe bin/chess
-#gzexe bin/libchess.so
+
+# compila o executável principal
+tcc -I./src/chess \
+    -o bin/chess \
+    src/chess/chess.c \
+    src/chess/chess-screen.c \
+    src/main.c
+
+# compila a biblioteca compartilhada
+tcc -shared -fPIC -I./src/chess \
+    -o bin/libchess.so \
+    src/chess/chess.c \
+    src/chess/chess-screen.c
+
+# limpa arquivos temporários
 rm -f bin/*~
+
+# executa
 ./bin/chess

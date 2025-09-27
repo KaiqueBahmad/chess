@@ -3,6 +3,23 @@
 
 // Type definitions
 typedef signed char board_t[8][8];
+typedef enum {
+  BLACK_KING = -1,
+  BLACK_QUEEN = -2,
+  BLACK_ROOK = -3,
+  BLACK_BISHOP = -4,
+  BLACK_KNIGHT = -5,
+  BLACK_PAWN = -6,
+
+  EMPTY = 0,
+
+  WHITE_KING = 1,
+  WHITE_QUEEN = 2,
+  WHITE_ROOK = 3,
+  WHITE_BISHOP = 4,
+  WHITE_KNIGHT = 5,
+  WHITE_PAWN = 6
+} Piece;
 
 typedef struct {
     int from_row, from_col;

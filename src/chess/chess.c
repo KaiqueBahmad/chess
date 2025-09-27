@@ -4,7 +4,6 @@
 #include <stdlib.h>  // Para rand() e srand()
 #include <time.h>    // Para clock_t, clock(), time()
 
-
 int possible_moves(board_t b, int i, int j, move_t moves[], int max_moves) {
     if (!valid(i,j) || !b[i][j]) return 0;
     
