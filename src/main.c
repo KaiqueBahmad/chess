@@ -1,287 +1,165 @@
 #include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+#include <stdlib.h>
 #include "chess/chess.h"
+#include "user_interface/user_interface.h"
 
-void print_board(board_t b) {
-    printf("\n  a b c d e f g h\n");
-    for (int i = 0; i < 8; i++) {
-        printf("%d ", 8 - i);
-        for (int j = 0; j < 8; j++) {
-            char c = '.';
-            Piece p = b[i][j];
+// Helper function to check if a player has any legal moves
+int has_legal_moves(chess_board_t board, int is_white) {
+    chess_move_t temp_moves[256];
+    chess_board_t temp_board;
 
-            // Normaliza para exibição
-            switch (p) {
-                case BLACK_KING:
-                case BLACK_MOVED_KING:
-                    c = 'k'; break;
-                case BLACK_QUEEN:
-                    c = 'q'; break;
-                case BLACK_ROOK:
-                case BLACK_MOVED_ROOK:
-                    c = 'r'; break;
-                case BLACK_BISHOP:
-                    c = 'b'; break;
-                case BLACK_KNIGHT:
-                    c = 'n'; break;
-                case BLACK_PAWN:
-                case BLACK_EN_PASSANT_PAWN:
-                    c = 'p'; break;
-                case WHITE_KING:
-                case WHITE_MOVED_KING:
-                    c = 'K'; break;
-                case WHITE_QUEEN:
-                    c = 'Q'; break;
-                case WHITE_ROOK:
-                case WHITE_MOVED_ROOK:
-                    c = 'R'; break;
-                case WHITE_BISHOP:
-                    c = 'B'; break;
-                case WHITE_KNIGHT:
-                    c = 'N'; break;
-                case WHITE_PAWN:
-                case WHITE_EN_PASSANT_PAWN:
-                    c = 'P'; break;
-                default:
-                    c = '.'; break;
-            }
-            printf("%c ", c);
-        }
-        printf("%d\n", 8 - i);
-    }
-    printf("  a b c d e f g h\n\n");
-}
-
-int parse_position(const char* pos, int* row, int* col) {
-    if (strlen(pos) != 2) return 0;
-
-    char col_char = tolower(pos[0]);
-    char row_char = pos[1];
-
-    if (col_char < 'a' || col_char > 'h') return 0;
-    if (row_char < '1' || row_char > '8') return 0;
-
-    *col = col_char - 'a';
-    *row = 8 - (row_char - '0');
-
-    return 1;
-}
-
-void print_piece_name(Piece p) {
-    switch (p) {
-        case BLACK_KING:
-        case BLACK_MOVED_KING:
-            printf("Rei preto"); break;
-        case BLACK_QUEEN:
-            printf("Rainha preta"); break;
-        case BLACK_ROOK:
-        case BLACK_MOVED_ROOK:
-            printf("Torre preta"); break;
-        case BLACK_BISHOP:
-            printf("Bispo preto"); break;
-        case BLACK_KNIGHT:
-            printf("Cavalo preto"); break;
-        case BLACK_PAWN:
-        case BLACK_EN_PASSANT_PAWN:
-            printf("Peão preto"); break;
-        case WHITE_KING:
-        case WHITE_MOVED_KING:
-            printf("Rei branco"); break;
-        case WHITE_QUEEN:
-            printf("Rainha branca"); break;
-        case WHITE_ROOK:
-        case WHITE_MOVED_ROOK:
-            printf("Torre branca"); break;
-        case WHITE_BISHOP:
-            printf("Bispo branco"); break;
-        case WHITE_KNIGHT:
-            printf("Cavalo branco"); break;
-        case WHITE_PAWN:
-        case WHITE_EN_PASSANT_PAWN:
-            printf("Peão branco"); break;
-        default:
-            printf("Vazio"); break;
-    }
-}
-
-int is_white_piece(Piece p) {
-    return p > 0;
-}
-
-int is_black_piece(Piece p) {
-    return p < 0;
-}
-
-int has_valid_moves(board_t b, int is_white_turn) {
-    move_t moves[100];
-
+    // Scan entire board for pieces of the current player
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            Piece p = b[i][j];
-            if (p == EMPTY) continue;
+            chess_Piece piece = board[i][j];
 
-            if ((is_white_turn && is_white_piece(p)) ||
-                (!is_white_turn && is_black_piece(p))) {
-                int count = possible_moves(b, i, j, moves, 100);
-                if (count > 0) return 1;
+            // Check if piece belongs to current player
+            int is_white_piece = (piece > 0);
+            if (is_white_piece != is_white) continue;
+            if (piece == EMPTY) continue;
+
+            // Get possible moves for this piece
+            int num_moves = chess_possible_moves(board, i, j, temp_moves, 256);
+
+            // Check each move to see if it's legal (doesn't leave king in check)
+            for (int m = 0; m < num_moves; m++) {
+                // Copy board
+                for (int r = 0; r < 8; r++) {
+                    for (int c = 0; c < 8; c++) {
+                        temp_board[r][c] = board[r][c];
+                    }
+                }
+
+                // Make the move on temp board
+                chess_make_move(temp_board, temp_moves[m]);
+
+                // Check if king is still in check after move
+                if (!chess_is_in_check(temp_board, is_white)) {
+                    return 1; // Found at least one legal move
+                }
             }
         }
     }
-    return 0;
+
+    return 0; // No legal moves found
+}
+
+// Filter out moves that would leave the king in check
+int filter_legal_moves(chess_board_t board, chess_move_t moves[], int num_moves,
+                       chess_move_t legal_moves[], int is_white) {
+    int legal_count = 0;
+    chess_board_t temp_board;
+
+    for (int i = 0; i < num_moves; i++) {
+        // Copy the board
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                temp_board[r][c] = board[r][c];
+            }
+        }
+
+        // Make the move on the temporary board
+        chess_make_move(temp_board, moves[i]);
+
+        // Check if the king is in check after the move
+        if (!chess_is_in_check(temp_board, is_white)) {
+            legal_moves[legal_count++] = moves[i];
+        }
+    }
+
+    return legal_count;
 }
 
 int main() {
-    board_t board;
-    char input[10];
-    int white_turn = 1;
-    int move_number = 1;
+    chess_board_t board;
+    chess_move_t selected_piece;
+    chess_move_t possible_moves[256];
+    chess_move_t legal_moves[256];
+    int num_possible_moves;
+    int num_legal_moves;
+    int is_white_turn = 1;
+    int game_over = 0;
 
-    printf("╔════════════════════════════════════╗\n");
-    printf("║        JOGO DE XADREZ              ║\n");
-    printf("║     Partida entre 2 jogadores      ║\n");
-    printf("╚════════════════════════════════════╝\n\n");
+    // Initialize the chess board
+    chess_init_board(board);
 
-    printf("Legenda:\n");
-    printf("  Peças BRANCAS: K(Rei) Q(Rainha) R(Torre) B(Bispo) N(Cavalo) P(Peão)\n");
-    printf("  Peças PRETAS:  k(rei) q(rainha) r(torre) b(bispo) n(cavalo) p(peão)\n\n");
+    // Display welcome message
+    ui_display_welcome();
 
-    init_board(board);
+    // Main game loop
+    while (!game_over) {
+        // Draw the current board state
+        ui_draw_board(board);
 
-    while (1) {
-        print_board(board);
+        // Check if current player is in check
+        if (chess_is_in_check(board, is_white_turn)) {
+            ui_announce_check(is_white_turn);
 
-        // Verifica xeque
-        int in_check = is_in_check(board, white_turn);
-        if (in_check) {
-            printf("⚠️  XEQUE! O rei %s está em xeque!\n\n",
-                   white_turn ? "branco" : "preto");
+            // Check for checkmate
+            if (!has_legal_moves(board, is_white_turn)) {
+                ui_announce_game_end(1, is_white_turn); // Checkmate
+                game_over = 1;
+                continue;
+            }
+        } else {
+            // Check for stalemate (not in check but no legal moves)
+            if (!has_legal_moves(board, is_white_turn)) {
+                ui_announce_game_end(0, is_white_turn); // Stalemate
+                game_over = 1;
+                continue;
+            }
         }
 
-        // Verifica se há movimentos válidos
-        if (!has_valid_moves(board, white_turn)) {
-            if (in_check) {
-                printf("\n╔════════════════════════════════════╗\n");
-                printf("║          XEQUE-MATE!               ║\n");
-                printf("║      %s VENCEU!        ║\n",
-                       white_turn ? "PRETAS" : "BRANCAS");
-                printf("╚════════════════════════════════════╝\n");
-            } else {
-                printf("\n╔════════════════════════════════════╗\n");
-                printf("║            EMPATE!                 ║\n");
-                printf("║          (Afogamento)              ║\n");
-                printf("╚════════════════════════════════════╝\n");
-            }
-            break;
-        }
+        // Display whose turn it is
+        ui_display_turn(is_white_turn);
 
-        printf("Lance %d - Turno das %s\n", move_number,
-               white_turn ? "BRANCAS" : "PRETAS");
+        // Loop until player makes a valid move
+        int valid_move_made = 0;
+        while (!valid_move_made) {
+            // Ask player to select a piece
+            selected_piece = ui_ask_select_piece(board, is_white_turn);
 
-        // Seleciona a peça
-        int from_row, from_col;
-        while (1) {
-            printf("\nDigite a posição da peça que deseja mover (ex: e2) ou 'sair': ");
-            if (scanf("%s", input) != 1) continue;
+            // Get all possible moves for the selected piece
+            num_possible_moves = chess_possible_moves(board,
+                                                      selected_piece.from_row,
+                                                      selected_piece.from_col,
+                                                      possible_moves,
+                                                      256);
 
-            if (strcmp(input, "sair") == 0) {
-                printf("\nJogo encerrado.\n");
-                return 0;
-            }
-
-            if (!parse_position(input, &from_row, &from_col)) {
-                printf("❌ Posição inválida! Use formato como 'e2'.\n");
+            if (num_possible_moves == 0) {
+                printf("No possible moves for this piece. Select another piece.\n");
                 continue;
             }
 
-            Piece piece = board[from_row][from_col];
+            // Filter to only legal moves (ones that don't leave king in check)
+            num_legal_moves = filter_legal_moves(board, possible_moves, num_possible_moves,
+                                                 legal_moves, is_white_turn);
 
-            if (piece == EMPTY) {
-                printf("❌ Não há nenhuma peça nesta posição!\n");
+            if (num_legal_moves == 0) {
+                printf("No legal moves for this piece (would leave king in check). Select another piece.\n");
                 continue;
             }
 
-            if ((white_turn && is_black_piece(piece)) ||
-                (!white_turn && is_white_piece(piece))) {
-                printf("❌ Esta peça não é sua! Escolha uma peça %s.\n",
-                       white_turn ? "branca" : "preta");
-                continue;
-            }
+            // Display possible moves
+            ui_display_possible_moves(board, legal_moves, num_legal_moves);
 
-            break;
+            // Ask player to select a move
+            chess_move_t selected_move = ui_ask_select_move(legal_moves, num_legal_moves);
+
+            // Make the move
+            chess_make_move(board, selected_move);
+
+            valid_move_made = 1;
         }
 
-        // Mostra os movimentos possíveis
-        move_t moves[100];
-        int count = possible_moves(board, from_row, from_col, moves, 100);
-
-        if (count == 0) {
-            printf("\n❌ Esta peça não tem movimentos válidos! Escolha outra.\n");
-            continue;
-        }
-
-        printf("\n✓ ");
-        print_piece_name(board[from_row][from_col]);
-        printf(" em %c%d\n", 'a' + from_col, 8 - from_row);
-        printf("\nMovimentos possíveis:\n");
-
-        for (int i = 0; i < count; i++) {
-            printf("  %d) %c%d", i + 1,
-                   'a' + moves[i].to_col, 8 - moves[i].to_row);
-
-            Piece target = board[moves[i].to_row][moves[i].to_col];
-            if (target != EMPTY) {
-                printf(" (captura ");
-                print_piece_name(target);
-                printf(")");
-            }
-
-            if (moves[i].promoted_to != EMPTY) {
-                printf(" (PROMOÇÃO)");
-            }
-
-            printf("\n");
-        }
-
-        // Seleciona o movimento
-        int choice;
-        while (1) {
-            printf("\nEscolha o movimento (1-%d) ou 0 para cancelar: ", count);
-            if (scanf("%d", &choice) != 1) {
-                while (getchar() != '\n');
-                printf("❌ Entrada inválida!\n");
-                continue;
-            }
-
-            if (choice == 0) {
-                printf("Movimento cancelado.\n");
-                break;
-            }
-
-            if (choice < 1 || choice > count) {
-                printf("❌ Escolha inválida! Digite um número entre 1 e %d.\n", count);
-                continue;
-            }
-
-            // Executa o movimento
-            make_move(board, moves[choice - 1]);
-
-            printf("\n✓ Movimento executado: %c%d -> %c%d\n",
-                   'a' + moves[choice - 1].from_col, 8 - moves[choice - 1].from_row,
-                   'a' + moves[choice - 1].to_col, 8 - moves[choice - 1].to_row);
-
-            white_turn = !white_turn;
-            if (white_turn) move_number++;
-
-            break;
-        }
-
-        if (choice == 0) continue;
-
-        printf("\n");
-        for (int i = 0; i < 50; i++) printf("─");
-        printf("\n");
+        // Switch turns
+        is_white_turn = !is_white_turn;
     }
+
+    // Display final board state
+    ui_draw_board(board);
+
+    printf("\nThank you for playing!\n");
 
     return 0;
 }
