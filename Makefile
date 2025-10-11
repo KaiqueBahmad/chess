@@ -13,7 +13,7 @@ LDFLAGS =
 # -------------------- UI SELECTION --------------------
 # CHANGE THIS LINE to choose the UI you want to build.
 # Options: linux (for linux_terminal), windows (for windows_gui), embedded (for embedded_lcd)
-UI_TYPE = linux
+UI_IMPLEMENTATION=
 # You can also set this on the command line: make UI_TYPE=windows
 
 # -------------------- DIRECTORIES & PATHS --------------------
@@ -23,20 +23,7 @@ CHESS_DIR = $(SRC_DIR)/chess
 # FIX: Adjusted UI_DIR to correctly reflect the structure (it is inside src/)
 UI_DIR = $(SRC_DIR)/user_interface
 
-UI_LINUX_IMPL = $(UI_DIR)/linux_terminal
-UI_WINDOWS_IMPL = $(UI_DIR)/windows_gui
-UI_EMBEDDED_IMPL = $(UI_DIR)/embedded_lcd
-
-# Select the correct UI implementation directory path
-ifeq ($(UI_TYPE), linux)
-    UI_IMPL_DIR = $(UI_LINUX_IMPL)
-else ifeq ($(UI_TYPE), windows)
-    UI_IMPL_DIR = $(UI_WINDOWS_IMPL)
-else ifeq ($(UI_TYPE), embedded)
-    UI_IMPL_DIR = $(UI_EMBEDDED_IMPL)
-else
-    $(error Invalid UI_TYPE specified. Choose linux, windows, or embedded.)
-endif
+UI_IMPL_DIR = $(UI_DIR)/$(UI_IMPLEMENTATION)
 
 # -------------------- FILES --------------------
 TARGET = $(BIN_DIR)/chess
@@ -72,7 +59,7 @@ all: $(TARGET)
 # $@ refers to the target (TARGET)
 $(TARGET): $(OBJECTS) | $(BIN_DIR)
 	$(CC) $^ -o $@ $(LDFLAGS)
-	@echo "Build completo: $@ (UI selected: $(UI_TYPE))"
+	@echo "Build completo: $@ (UI selected: $(UI_IMPLEMENTATION))"
 
 # 2. Compilation Rule (Pattern Rule): Compile any .c file into a .o file
 # This single rule handles all source files (main, chess, and the selected UI)
